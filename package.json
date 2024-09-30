@@ -1,0 +1,6 @@
+
+{
+"scripts": {
+  "start": "concurrently \"cd backend/crud_ex && npm run start:dev\" \"cd frontend/crud_ex && npm run start\""
+}
+}
