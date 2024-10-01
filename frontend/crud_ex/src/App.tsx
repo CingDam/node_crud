@@ -12,6 +12,9 @@ const App:React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [boardContent,setBoardContent] = useState<Board[]>([]);
   const [modal,setModal] = useState(false);
+  const [update,setUpdate] = useState(false);
+  const [updateName,setUpdateName] = useState('');
+  const [updateKey,setupdateKey] = useState(0);
   /*
     타입스크립트 같은경우 ref값이 명시적 타입이 지정되어있지 않으면 undefiend로 인식
     제너릭을 이용하여 ref값을 null또는 요소값으로 적용 초기값은 null를 적용하여
@@ -19,7 +22,6 @@ const App:React.FC = () => {
   */
   const inputValue = useRef<HTMLInputElement | null>(null);
   let data;
-
   
   useEffect(() => {
     const fetchInedx = async () => {
@@ -117,7 +119,7 @@ const deleteData = (deleteKey:number) => {
   setBoardContent(updatedContent); // 상태 업데이트
 
   fetch('http://localhost:3001/delete',{
-    method:'POST',
+    method:'DELETE',
     headers : {
       'Content-Type' : 'application/json'
     },
@@ -125,6 +127,45 @@ const deleteData = (deleteKey:number) => {
       id: deleteKey
     })
   })
+}
+
+const updateClick = (id:number,name:string) => {
+  setUpdate(true)
+  let indexNum = boardContent.findIndex((board) => board.name === name)
+   setUpdateName(boardContent[indexNum].name)
+   setupdateKey(boardContent[indexNum].id)
+}
+
+const handleUpdateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  setUpdateName(e.target.value); // 상태를 업데이트
+};
+
+const updateData = (id:number) => {
+  if(inputValue.current){
+    let updateValue:string = inputValue.current.value;
+    console.log(updateValue)
+    if(updateValue===''){
+      alert('변경할 내용을 적어주세요!')
+    }
+    else {
+      const updateBoradContent = boardContent.map((board) => {
+        if(board.id === id) {
+          return{...board, name:updateValue};
+        }
+        return board;
+      })
+      setBoardContent(updateBoradContent)
+      fetch('http://localhost:3001/update',{
+        method:'PUT',
+        headers : {
+          'Content-Type' : 'application/json'
+        }, body : JSON.stringify({
+          id: id,
+          name: updateValue
+        })
+      })
+    }
+  }
 }
 
   return (
@@ -144,6 +185,7 @@ const deleteData = (deleteKey:number) => {
                       <td>{board.id}</td>
                      <td>{board.name}</td>
                      <td><button onClick={() => deleteData(board.id)}>삭제</button></td>
+                     <td><button onClick={() => updateClick(board.id,board.name)}>변경</button></td>
                    </tr>
                   ))}
                 </tbody>
@@ -161,6 +203,13 @@ const deleteData = (deleteKey:number) => {
               <input type='text' placeholder='추가할 값을 입력하세요' ref={inputValue}/>
               <button onClick={postData}>보내기</button><button onClick={() => setModal(false)}>취소하기</button>
             </div>}
+            {
+              update &&
+              <div>
+                <input type='text' value={updateName} key={updateKey} ref={inputValue}  onChange={handleUpdateChange} />
+                <button onClick={() => updateData(updateKey)}>변경하기</button>
+              </div>
+            }
         </div>
     </div>
   );
