@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Put } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
@@ -13,9 +13,15 @@ export class AppController {
     this.appService.postBoard(item);
     return { item };
   }
-  @Post('/delete')
+  @Delete('/delete')
   deleteBoard(@Body() item: { id: number; name: string }) {
     this.appService.deleteBoard(item);
     return { message: '삭제완료' };
+  }
+  @Put('/update')
+  updateBoard(@Body() item: {id:number; name: string}) {
+    this.appService.updateBoard(item)
+    return{message : '변경완료'}
+
   }
 }
