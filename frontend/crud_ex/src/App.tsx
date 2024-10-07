@@ -135,19 +135,25 @@ const updateClick = (id:number,name:string) => {
    setUpdateName(boardContent[indexNum].name)
    setupdateKey(boardContent[indexNum].id)
 }
-
+// 업데이트 값을 변경하기위한 메소드
 const handleUpdateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   setUpdateName(e.target.value); // 상태를 업데이트
 };
 
 const updateData = (id:number) => {
+  // 타입스크립트에서는 null타입은 특정타입에 들어갈 수 x 그래서 조건문으로 null 먼저 체크
   if(inputValue.current){
     let updateValue:string = inputValue.current.value;
     console.log(updateValue)
     if(updateValue===''){
+      //빈칸이 들어올 때 경고창 뜨게
       alert('변경할 내용을 적어주세요!')
     }
     else {
+      /*
+        값이 확인되면 새로운 게시판 콘텐츠 배열 생성하기 위해
+        map을 이용하여 기존값과 보내준 id값을 확인
+      */
       const updateBoradContent = boardContent.map((board) => {
         if(board.id === id) {
           return{...board, name:updateValue};
@@ -155,8 +161,9 @@ const updateData = (id:number) => {
         return board;
       })
       setBoardContent(updateBoradContent)
+      //fetch 기능을 이용해 update연결
       fetch('http://localhost:3001/update',{
-        method:'PUT',
+        method:'PUT', // update는 put메소드 사용 (대문자)
         headers : {
           'Content-Type' : 'application/json'
         }, body : JSON.stringify({
