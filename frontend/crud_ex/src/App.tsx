@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './App.css';
 import PostData from './util/PostData';
-import Modal from './Modal/PostData';
 
 interface Board {
   id: number;
@@ -9,32 +8,39 @@ interface Board {
 }
 
 const App:React.FC = () => {
+  const [name,setName] = useState('');
   const [loading, setLoading] = useState(true);
   const [boardContent,setBoardContent] = useState<Board[]>([]);
   const [modal,setModal] = useState(false);
   const [update,setUpdate] = useState(false);
   const [updateName,setUpdateName] = useState('');
   const [updateKey,setupdateKey] = useState(0);
+  const [id,setId] = useState<string>('');
+  const [loginSuccess,setLoginSuccess] = useState(false);
+  const pwdRef = useRef<HTMLInputElement | null>(null)
   /*
     타입스크립트 같은경우 ref값이 명시적 타입이 지정되어있지 않으면 undefiend로 인식
     제너릭을 이용하여 ref값을 null또는 요소값으로 적용 초기값은 null를 적용하여
     오류가 안나오게 설정
   */
   const inputValue = useRef<HTMLInputElement | null>(null);
-  let data;
   
   useEffect(() => {
     const fetchInedx = async () => {
       try {
-        const response = await fetch('http://localhost:3001/');
+        const response = await fetch('/index');
         
         if(!response.ok){
           throw new Error('Network response was not ok');
         }
-        data = await response.json()
-        console.log(data)
-        setBoardContent(data);
-        console.log(data)
+        let data = await response.json()
+
+        if(data.user !== null) {
+          console.log(data)
+          setBoardContent(data.board);
+          setLoginSuccess(true);
+          setName(data.user.user_name)
+        }
       } catch (error) {
         console.log(error)
       } finally {
@@ -70,7 +76,7 @@ const postData = () => {
             //추가하기를 누르면 화면에 바로 생성하게
             boardContent.push({id:newId,name:value})
             //데이터를 보내 실제 서버에 있는 배열데이터에 추가하게 실행
-            fetch('http://localhost:3001/insert' //주소를 보내 뒤의 insert를 확인하여 해당 펑션 실행
+            fetch('/insert' //주소를 보내 뒤의 insert를 확인하여 해당 펑션 실행
               ,{
               method:'POST',
               headers: {
@@ -91,7 +97,7 @@ const postData = () => {
             console.log(newId,value)
             setModal(false);
             boardContent.push({id:newId,name:value})
-            fetch('http://localhost:3001/insert',{
+            fetch('/insert',{
               method:'POST',
               headers: {
                 'Content-Type': 'application/json'
@@ -118,7 +124,7 @@ const deleteData = (deleteKey:number) => {
   const updatedContent = boardContent.filter((board) => board.id !== deleteKey);
   setBoardContent(updatedContent); // 상태 업데이트
 
-  fetch('http://localhost:3001/delete',{
+  fetch('/delete',{
     method:'DELETE',
     headers : {
       'Content-Type' : 'application/json'
@@ -135,13 +141,14 @@ const updateClick = (id:number,name:string) => {
    setUpdateName(boardContent[indexNum].name)
    setupdateKey(boardContent[indexNum].id)
 }
-// 업데이트 값을 변경하기위한 메소드
+/** 업데이트 값을 변경하기위한 메소드 */
 const handleUpdateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  setUpdateName(e.target.value); // 상태를 업데이트
+   /** 상태를 업데이트 */ 
+  setUpdateName(e.target.value);
 };
 
 const updateData = (id:number) => {
-  // 타입스크립트에서는 null타입은 특정타입에 들어갈 수 x 그래서 조건문으로 null 먼저 체크
+  /** 타입스크립트에서는 null타입은 특정타입에 들어갈 수 x 그래서 조건문으로 null 먼저 체크 */ 
   if(inputValue.current){
     let updateValue:string = inputValue.current.value;
     console.log(updateValue)
@@ -161,8 +168,9 @@ const updateData = (id:number) => {
         return board;
       })
       setBoardContent(updateBoradContent)
+      setUpdate(false)
       //fetch 기능을 이용해 update연결
-      fetch('http://localhost:3001/update',{
+      fetch('/update',{
         method:'PUT', // update는 put메소드 사용 (대문자)
         headers : {
           'Content-Type' : 'application/json'
@@ -174,49 +182,106 @@ const updateData = (id:number) => {
     }
   }
 }
+function login( id : string ) {
+  const pwd = pwdRef.current ? pwdRef.current.value : '';
+  fetch('/login',{
+    method:"POST",
+    headers: {
+      'Content-Type' : 'application/json'
+    },
+    body : JSON.stringify({
+      user_id : id,
+      user_pwd : pwd,
+    })
+  }).then(response => response.json())
+  .then(data => {
+    console.log(data)
+    if(data.item){
+      setBoardContent(data.board);
+      setName(data.item.user_name)
+      setId('');
+      setLoginSuccess(true);
+      if(pwdRef.current) pwdRef.current.value = '';
+    } else {
+      alert(data.message)
+      setId('');
+      if(pwdRef.current) pwdRef.current.value = '';
+    }
 
+  })
+  .catch(error => console.error(error));
+}
+
+const logout = () => {
+  fetch('logout')
+  .then(response => response.json())
+  .then(data => {
+    alert(data.message)
+    setLoginSuccess(false);
+  })
+  .catch(error => console.error(error));
+}
   return (
     <div className="App">
         <div>
-            <table>
+           {!loginSuccess && <div>
+              <div>
+                <p>아이디</p>
+                <input type='text' id='id' value={id} onChange={e => setId(e.target.value)}></input>
+              </div>
+              <div>
+                <p>비밀번호</p>
+                <input type='password' id='pwd' ref={pwdRef}></input>
+              </div>
+              <div>
+                <button onClick={()=> {login(id)}}>로그인 하기</button>
+              </div>
+            </div>
+          }
+          {loginSuccess && <div>
+              환영합니다 {name}님!
+              <div><button onClick={logout}>로그아웃</button></div>
+              <div>
+              <table>
                 <thead>
-                    <tr>
-                        <th>번호</th>
-                        <th>제목</th>
-                        <th>기능</th>
-                    </tr>
+                  <tr>
+                      <th>번호</th>
+                      <th>제목</th>
+                      <th>기능</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {boardContent.map((board) => (
-                     <tr key={board.id}>
+                      <tr key={board.id}>
                       <td>{board.id}</td>
-                     <td>{board.name}</td>
-                     <td><button onClick={() => deleteData(board.id)}>삭제</button></td>
-                     <td><button onClick={() => updateClick(board.id,board.name)}>변경</button></td>
-                   </tr>
+                      <td>{board.name}</td>
+                      <td><button onClick={() => deleteData(board.id)}>삭제</button></td>
+                      <td><button onClick={() => updateClick(board.id,board.name)}>변경</button></td>
+                    </tr>
                   ))}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colSpan={2}>
-                      <PostData openModal={openModal}/>
-                    </td>
-                  </tr>
-    
-                </tfoot>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan={2}>
+                    <PostData openModal={openModal}/>
+                  </td>
+                </tr>
+              </tfoot>
             </table>
+            </div>
             {modal &&
             <div>
               <input type='text' placeholder='추가할 값을 입력하세요' ref={inputValue}/>
               <button onClick={postData}>보내기</button><button onClick={() => setModal(false)}>취소하기</button>
             </div>}
-            {
-              update &&
+            {update &&
               <div>
                 <input type='text' value={updateName} key={updateKey} ref={inputValue}  onChange={handleUpdateChange} />
                 <button onClick={() => updateData(updateKey)}>변경하기</button>
               </div>
             }
+            </div>}
+
         </div>
     </div>
   );
