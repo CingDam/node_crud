@@ -16,9 +16,8 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false,
-    "watch": true 
+    "noFallthroughCasesInSwitch": false
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*","src/types/**/*.d.ts" ,"src/service/app.service.ts"],
   "exclude": ["node_modules"]
 }
