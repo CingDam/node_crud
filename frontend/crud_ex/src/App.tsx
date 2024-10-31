@@ -300,7 +300,7 @@ const signUp = () => {
                   </div>
                   <div>
                     <button onClick={signUp}>회원가입하기</button>
-                  </div>
+                  </div>  
               </div>
             </div>
           }
