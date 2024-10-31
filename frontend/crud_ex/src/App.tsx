@@ -17,7 +17,14 @@ const App:React.FC = () => {
   const [updateKey,setupdateKey] = useState(0);
   const [id,setId] = useState<string>('');
   const [loginSuccess,setLoginSuccess] = useState(false);
-  const pwdRef = useRef<HTMLInputElement | null>(null)
+  const [signUpModal, setSignUpModal] = useState(false);
+  const pwdRef = useRef<HTMLInputElement | null>(null);
+
+  const signUpId = useRef<HTMLInputElement | null>(null);
+  const signUpPwd = useRef<HTMLInputElement | null>(null);
+  const signUpPwdChk = useRef<HTMLInputElement | null>(null);
+  const signUpName = useRef<HTMLInputElement | null>(null);
+  const signUpEmail = useRef<HTMLInputElement | null>(null);
   /*
     타입스크립트 같은경우 ref값이 명시적 타입이 지정되어있지 않으면 undefiend로 인식
     제너릭을 이용하여 ref값을 null또는 요소값으로 적용 초기값은 null를 적용하여
@@ -221,6 +228,40 @@ const logout = () => {
   })
   .catch(error => console.error(error));
 }
+
+const signupModalOn = () => {
+  setSignUpModal(true);
+}
+
+const signUp = () => {
+  let id = signUpId.current ? signUpId.current.value : '';
+  let pwd = signUpPwd.current ? signUpPwd.current.value : '';
+  let name = signUpName.current ? signUpName.current.value : '';
+  let email = signUpEmail.current ? signUpEmail.current.value : '';
+
+  fetch('/signup', {
+    method : 'POST',
+    headers : {
+      'Content-Type' : 'application/json'
+    },
+    body : JSON.stringify({
+      user_id: id,
+      user_pwd: pwd,
+      user_name: name,
+      user_email: email,
+    })
+  }).then(response => response.json())
+  .then(data => {
+    alert(data.message);
+    if(signUpId.current) signUpId.current.value = '';
+    if(signUpPwd.current) signUpPwd.current.value = '';
+    if(signUpName.current) signUpName.current.value = '';
+    if(signUpEmail.current) signUpEmail.current.value = '';
+    setSignUpModal(false);
+  }).catch(
+    error => console.error(error)
+  )
+}
   return (
     <div className="App">
         <div>
@@ -235,6 +276,31 @@ const logout = () => {
               </div>
               <div>
                 <button onClick={()=> {login(id)}}>로그인 하기</button>
+                <button onClick={signupModalOn}>회원가입</button>
+              </div>
+            </div>
+          }
+          {
+            signUpModal && <div className='modal'>
+              <div className='modalBox'>
+              <div>
+                    아이디 : <input type="text" name="" id="singup-id" ref={signUpId} />
+                  </div>
+                  <div>
+                    비밀번호 : <input type="password" ref={signUpPwd} />
+                  </div>
+                  <div>
+                    비밀번호 확인 : <input type="password" ref={signUpPwdChk}/>
+                  </div>
+                  <div>
+                    이름 : <input type="text" name="" id="signup-name" ref={signUpName}/>
+                  </div>
+                  <div >
+                      EMail : <input type="text" name="" id="signup-email" ref={signUpEmail}/>@ <input type="text" name="" id="" />
+                  </div>
+                  <div>
+                    <button onClick={signUp}>회원가입하기</button>
+                  </div>
               </div>
             </div>
           }
