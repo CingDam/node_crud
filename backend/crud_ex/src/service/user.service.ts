@@ -10,6 +10,14 @@ export class UserService {
     private userRepository: Repository<User>,
   ) {}
 
+  async dupliaction(item: { user_id: string }) {
+    const dupliactionUser = await this.userRepository.findOne({ where: { user_id: item.user_id } });
+    if (dupliactionUser) {
+      return false;
+    } else {
+      return true;
+    }
+  }
   async signup(item: { user_id: string; user_pwd: string; user_name: string; user_email: string }) {
     const newUser = {
       user_id: item.user_id,
