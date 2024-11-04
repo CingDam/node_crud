@@ -7,6 +7,15 @@ interface Board {
   name : string;
 }
 
+
+const Agree = () => {
+  return(<div>값이 일치합니다!</div>);
+} 
+
+const DisAgree = () => {
+  return(<div>값이 일치하지않습니다!</div>)
+}
+
 const App:React.FC = () => {
   const [name,setName] = useState('');
   const [loading, setLoading] = useState(true);
@@ -21,10 +30,13 @@ const App:React.FC = () => {
   const pwdRef = useRef<HTMLInputElement | null>(null);
 
   const signUpId = useRef<HTMLInputElement | null>(null);
-  const signUpPwd = useRef<HTMLInputElement | null>(null);
-  const signUpPwdChk = useRef<HTMLInputElement | null>(null);
+  const [signUpPwd , setSingUpPwd] = useState('');
+  const [signUpPwdChk, setSingUpPwdChk] = useState('');
+  const [agree,setAgree] = useState<boolean | null>(null);
+  const [agreeSingUp, setAgreeSignUp] = useState(false);
   const signUpName = useRef<HTMLInputElement | null>(null);
-  const signUpEmail = useRef<HTMLInputElement | null>(null);
+  const [signUpEmail,setSignUpEmail] = useState('');
+  const [adminChk,setAdminChk] = useState(false);
   /*
     타입스크립트 같은경우 ref값이 명시적 타입이 지정되어있지 않으면 undefiend로 인식
     제너릭을 이용하여 ref값을 null또는 요소값으로 적용 초기값은 null를 적용하여
@@ -32,6 +44,36 @@ const App:React.FC = () => {
   */
   const inputValue = useRef<HTMLInputElement | null>(null);
   
+
+  /* 
+    - useState / useRef / useEffect 등등 React Hook은 항상 제일 위에 선언해야함
+    useEffect(function(){},[]) 
+    - useEffect
+      - 컴포넌트의 특정한값이 변경될 때 실행하게 하는 react hook 
+
+    - []의 의미
+      - 이 배열은 의존성 배열
+      - 배열의 값이 변경되면 effect가 실행
+      - 빈값은 최초실행이후 사용 x
+  */
+  useEffect(() => {
+    // 이 부분은 항상 호출됩니다.
+    if (signUpPwd && signUpPwdChk) {
+      setAgree(signUpPwd === signUpPwdChk);
+    } else {
+      setAgree(null); // 입력이 비어있을 경우 초기화
+    }
+  }, [signUpPwd, signUpPwdChk]);
+
+  useEffect(() => {
+    let id = signUpId.current ? signUpId.current.value : '';
+    let name = signUpName.current ? signUpName.current.value : '';
+    if(id&&agree&&name&&signUpEmail && !agreeSingUp){
+      setAgreeSignUp(true);
+    }
+  
+  },[agree, signUpEmail,agreeSingUp])
+
   useEffect(() => {
     const fetchInedx = async () => {
       try {
@@ -208,7 +250,12 @@ function login( id : string ) {
       setName(data.item.user_name)
       setId('');
       setLoginSuccess(true);
+      console.log(data.item.user_name === '관리자');
       if(pwdRef.current) pwdRef.current.value = '';
+
+      if(data.item.user_name === '관리자') {
+        setAdminChk(true);
+      }
     } else {
       alert(data.message)
       setId('');
@@ -225,6 +272,7 @@ const logout = () => {
   .then(data => {
     alert(data.message)
     setLoginSuccess(false);
+    setAdminChk(false);
   })
   .catch(error => console.error(error));
 }
@@ -235,9 +283,9 @@ const signupModalOn = () => {
 
 const signUp = () => {
   let id = signUpId.current ? signUpId.current.value : '';
-  let pwd = signUpPwd.current ? signUpPwd.current.value : '';
+  let pwd = signUpPwd;
   let name = signUpName.current ? signUpName.current.value : '';
-  let email = signUpEmail.current ? signUpEmail.current.value : '';
+  let email = signUpEmail
 
   fetch('/signup', {
     method : 'POST',
@@ -254,13 +302,39 @@ const signUp = () => {
   .then(data => {
     alert(data.message);
     if(signUpId.current) signUpId.current.value = '';
-    if(signUpPwd.current) signUpPwd.current.value = '';
+    setSingUpPwd('');
+    setSingUpPwdChk('');
     if(signUpName.current) signUpName.current.value = '';
-    if(signUpEmail.current) signUpEmail.current.value = '';
     setSignUpModal(false);
   }).catch(
     error => console.error(error)
   )
+}
+
+const duplication = () => {
+  let id = signUpId.current ? signUpId.current.value : '';
+  fetch('/duplication', {
+    method:'POST',
+    headers: {
+      'Content-Type' : 'application/json'
+    },body : JSON.stringify({
+      user_id: id, 
+    })
+  }).then( response => response.json())
+  .then(data => {
+
+    if(data.result === true) {
+      alert(data.message);
+    } else if (data.result === false) {
+      alert(data.message)
+      if(signUpId.current) signUpId.current.value = '';
+    }
+  })
+  .catch(error => console.error(error));
+}
+
+const closeModal = () => {
+  setSignUpModal(false);
 }
   return (
     <div className="App">
@@ -283,24 +357,30 @@ const signUp = () => {
           {
             signUpModal && <div className='modal'>
               <div className='modalBox'>
-              <div>
+                  <div className='CloseBtn' onClick={closeModal}>X</div>
+                  <div>
                     아이디 : <input type="text" name="" id="singup-id" ref={signUpId} />
+                    <button onClick={duplication}>중복체크</button>
                   </div>
                   <div>
-                    비밀번호 : <input type="password" ref={signUpPwd} />
+                    비밀번호 : <input type="password" onChange={e => setSingUpPwd(e.target.value)} />
                   </div>
                   <div>
-                    비밀번호 확인 : <input type="password" ref={signUpPwdChk}/>
+                    비밀번호 확인 : <input type="password" onChange={e => setSingUpPwdChk(e.target.value)} />
+                    {agree === true && <Agree/>}
+                    {agree === false && <DisAgree/>}
                   </div>
                   <div>
                     이름 : <input type="text" name="" id="signup-name" ref={signUpName}/>
                   </div>
                   <div >
-                      EMail : <input type="text" name="" id="signup-email" ref={signUpEmail}/>@ <input type="text" name="" id="" />
+                    EMail : <input type="text" name="" id="signup-email" onChange={e=> setSignUpEmail(e.target.value)}/>
                   </div>
-                  <div>
-                    <button onClick={signUp}>회원가입하기</button>
-                  </div>  
+                 {
+                  (agreeSingUp && agree) &&  <div>
+                  <button onClick={signUp}>회원가입하기</button>
+                </div>
+                 }  
               </div>
             </div>
           }
@@ -313,7 +393,11 @@ const signUp = () => {
                   <tr>
                       <th>번호</th>
                       <th>제목</th>
-                      <th>기능</th>
+                      {
+                        adminChk && <>
+                        <th>기능</th>
+                        </>
+                      }
                   </tr>
                 </thead>
                 <tbody>
@@ -321,8 +405,12 @@ const signUp = () => {
                       <tr key={board.id}>
                       <td>{board.id}</td>
                       <td>{board.name}</td>
-                      <td><button onClick={() => deleteData(board.id)}>삭제</button></td>
-                      <td><button onClick={() => updateClick(board.id,board.name)}>변경</button></td>
+                      {
+                        adminChk &&
+                        <>
+                        <td><button onClick={() => deleteData(board.id)}>삭제</button></td><td><button onClick={() => updateClick(board.id, board.name)}>변경</button></td>
+                        </>
+                      }
                     </tr>
                   ))}
               </tbody>

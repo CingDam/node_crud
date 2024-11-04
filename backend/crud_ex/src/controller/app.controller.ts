@@ -59,4 +59,13 @@ export class AppController {
     this.userService.signup(item);
     return { message: '회원가입 성공!' };
   }
+  @Post('duplication')
+  async duplicaion(@Body() item) {
+    const dupliactionUser = await this.userService.dupliaction(item);
+    if (dupliactionUser === false) {
+      return { message: '이미 사용하고있는 아이디입니다.', result: dupliactionUser };
+    } else {
+      return { message: '아이디가 사용가능합니다.', result: dupliactionUser };
+    }
+  }
 }
