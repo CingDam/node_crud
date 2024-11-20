@@ -3,8 +3,8 @@ import './App.css';
 import PostData from './util/PostData';
 
 interface Board {
-  id: number;
-  name : string;
+  boardnum: number;
+  boardname : string;
 }
 
 
@@ -27,6 +27,8 @@ const App:React.FC = () => {
   const [id,setId] = useState<string>('');
   const [loginSuccess,setLoginSuccess] = useState(false);
   const [signUpModal, setSignUpModal] = useState(false);
+  const [userNum, setUserNum] = useState('');
+
   const pwdRef = useRef<HTMLInputElement | null>(null);
 
   const signUpId = useRef<HTMLInputElement | null>(null);
@@ -88,7 +90,8 @@ const App:React.FC = () => {
           console.log(data)
           setBoardContent(data.board);
           setLoginSuccess(true);
-          setName(data.user.user_name)
+          setName(data.user.user_name);
+          setUserNum(data.user.user_num);
         }
       } catch (error) {
         console.log(error)
@@ -123,7 +126,7 @@ const postData = () => {
             console.log(newId,value)
             setModal(false);
             //추가하기를 누르면 화면에 바로 생성하게
-            boardContent.push({id:newId,name:value})
+            boardContent.push({boardnum:newId,boardname:value})
             //데이터를 보내 실제 서버에 있는 배열데이터에 추가하게 실행
             fetch('/insert' //주소를 보내 뒤의 insert를 확인하여 해당 펑션 실행
               ,{
@@ -142,10 +145,10 @@ const postData = () => {
       else {
         boardContent.forEach((item,index) => {
           if(index === boardContent.length-1){
-            newId = item.id+1
+            newId = item.boardnum+1
             console.log(newId,value)
             setModal(false);
-            boardContent.push({id:newId,name:value})
+            boardContent.push({boardnum:newId,boardname:value})
             fetch('/insert',{
               method:'POST',
               headers: {
@@ -170,7 +173,7 @@ const postData = () => {
 const deleteData = (deleteKey:number) => {
   // 클릭한 아이템을 제외한 새로운 배열 생성
   // filter는 배열을 읽은뒤 뒤에 조건문과 맞는 것만 남기고 새로운 배열을 생성
-  const updatedContent = boardContent.filter((board) => board.id !== deleteKey);
+  const updatedContent = boardContent.filter((board) => board.boardnum !== deleteKey);
   setBoardContent(updatedContent); // 상태 업데이트
 
   fetch('/delete',{
@@ -186,9 +189,9 @@ const deleteData = (deleteKey:number) => {
 
 const updateClick = (id:number,name:string) => {
   setUpdate(true)
-  let indexNum = boardContent.findIndex((board) => board.name === name)
-   setUpdateName(boardContent[indexNum].name)
-   setupdateKey(boardContent[indexNum].id)
+  let indexNum = boardContent.findIndex((board) => board.boardname === name)
+   setUpdateName(boardContent[indexNum].boardname)
+   setupdateKey(boardContent[indexNum].boardnum)
 }
 /** 업데이트 값을 변경하기위한 메소드 */
 const handleUpdateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,7 +214,7 @@ const updateData = (id:number) => {
         map을 이용하여 기존값과 보내준 id값을 확인
       */
       const updateBoradContent = boardContent.map((board) => {
-        if(board.id === id) {
+        if(board.boardnum === id) {
           return{...board, name:updateValue};
         }
         return board;
@@ -357,7 +360,7 @@ const closeModal = () => {
           {
             signUpModal && <div className='modal'>
               <div className='modalBox'>
-                  <div className='CloseBtn' onClick={closeModal}>X</div>
+                  <span className='CloseBtn' onClick={closeModal}>X</span>
                   <div>
                     아이디 : <input type="text" name="" id="singup-id" ref={signUpId} />
                     <button onClick={duplication}>중복체크</button>
@@ -402,13 +405,13 @@ const closeModal = () => {
                 </thead>
                 <tbody>
                   {boardContent.map((board) => (
-                      <tr key={board.id}>
-                      <td>{board.id}</td>
-                      <td>{board.name}</td>
+                      <tr key={board.boardnum}>
+                      <td>{board.boardnum}</td>
+                      <td>{board.boardname}</td>
                       {
                         adminChk &&
                         <>
-                        <td><button onClick={() => deleteData(board.id)}>삭제</button></td><td><button onClick={() => updateClick(board.id, board.name)}>변경</button></td>
+                        <td><button onClick={() => deleteData(board.boardnum)}>삭제</button></td><td><button onClick={() => updateClick(board.boardnum, board.boardname)}>변경</button></td>
                         </>
                       }
                     </tr>
