@@ -2,16 +2,19 @@ import { Body, Controller, Delete, Get, Post, Put, Req, Res } from '@nestjs/comm
 import { AppService } from '../service/app.service';
 import { UserService } from 'src/service/user.service';
 import { Request, Response } from 'express';
+import { boardService } from 'src/service/board.service';
 
 @Controller()
 export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly userService: UserService,
+    private readonly boardService: boardService,
   ) {}
   @Get('/index') // 새로운 GET 요청 핸들러 추가
   async getBoard(@Req() req: Request, @Res() res: Response) {
-    const boardData = this.appService.getBoard(); // 실제 보드 데이터를 가져오는 메서드
+    const boardData = await this.boardService.getBoard(); // 실제 보드 데이터를 가져오는 메서드
+    console.log(boardData);
     const sessionUser = req.session.user || null; // 세션 사용자 정보
     return res.status(200).json({ board: boardData, user: sessionUser });
   }
@@ -37,7 +40,7 @@ export class AppController {
       return res.json({ board: req.session.board, item: req.session.user });
     } else {
       const user = await this.userService.login(item);
-      const board = this.appService.getBoard();
+      const board = await this.boardService.getBoard();
       console.log(board);
       if (user !== null) {
         req.session.user = user;

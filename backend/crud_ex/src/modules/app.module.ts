@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { typeOrmConfig } from 'src/config/typeorm.config';
 import { UserModule } from './user.module';
 import * as session from 'express-session';
+import { BoardModule } from './board.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import * as session from 'express-session';
     }),
     TypeOrmModule.forRoot(typeOrmConfig),
     UserModule,
+    BoardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

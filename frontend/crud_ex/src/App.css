@@ -29,3 +29,15 @@
     opacity: 1;
   }
 }
+
+
+.CloseBtn {
+  position: relative;
+  text-align: right;
+  top : 10px;
+  left : 280px;
+  font-weight: 700;
+}
+.CloseBtn:hover{
+  cursor: pointer;
+}
